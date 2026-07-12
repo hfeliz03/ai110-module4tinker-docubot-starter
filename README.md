@@ -1,82 +1,113 @@
 # DocuBot
 
-DocuBot is a small documentation assistant that helps answer developer questions about a codebase.  
-It can operate in three different modes:
+## TF Reflection
 
-1. **Naive LLM mode**  
-   Sends the entire documentation corpus to a Gemini model and asks it to answer the question.
+This tinker asks students to compare three ways of answering documentation questions: naive LLM prompting, retrieval only, and retrieval augmented generation (RAG). As a Tech Fellow, the most important thing to reinforce is that the activity is about reasoning and tradeoffs, not just "making the bot sound good."
 
-2. **Retrieval only mode**  
-   Uses a simple indexing and scoring system to retrieve relevant snippets without calling an LLM.
+- Students should understand the difference between retrieval and generation. Retrieval finds evidence. Generation turns evidence into an answer. RAG combines both.
+- A polished answer is not automatically a correct answer. Students should inspect whether the answer is grounded in the provided docs.
+- The retrieval baseline matters. If retrieval is weak, RAG will still be weak because the model can only ground itself in what it receives.
+- Refusals are a success condition in this activity. "I do not know based on the docs I have" is often better than a confident hallucination.
+- Students may confuse these fictional docs with a real backend. Remind them the `docs/` folder is the corpus, and the project is intentionally lightweight.
+- Prompting should be evaluated, not worshipped. Better prompts can help, but prompt changes do not replace missing evidence or bad retrieval.
+- The evaluation script is intentionally simple. Its job is to help students compare iterations, not to act like a perfect benchmark.
+- When students get stuck, guide them toward observable system behavior:
+  What tokens are in the query?
+  Which files were retrieved?
+  Why did those files score well or poorly?
+  Did the prompt tell the model to stay grounded?
+- Encourage students to test edge cases, especially questions the docs cannot answer. Those cases reveal whether the system is safe and honest.
+- Common debugging moves:
+  print retrieved filenames
+  inspect tokenization choices
+  compare retrieval only output against RAG output
+  try the same query across all three modes
 
-3. **RAG mode (Retrieval Augmented Generation)**  
-   Retrieves relevant snippets, then asks Gemini to answer using only those snippets.
+Helpful coaching questions:
 
-The docs folder contains realistic developer documents (API reference, authentication notes, database notes), but these files are **just text**. They support retrieval experiments and do not require students to set up any backend systems.
+- "What evidence did your system use for that answer?"
+- "If the docs do not say that, what should the bot do instead?"
+- "Is the problem retrieval, prompting, or both?"
+- "What changed after you modified scoring or snippet selection?"
 
----
+## Project Overview
+
+DocuBot is a small documentation assistant for a tinker activity about search, grounding, and LLM behavior. It supports three modes:
+
+1. `Naive LLM mode`
+   The full documentation corpus is sent to Gemini with no retrieval step.
+2. `Retrieval only mode`
+   The system returns the most relevant documents or snippets without calling an LLM.
+3. `RAG mode`
+   The system retrieves relevant context first, then asks Gemini to answer using only that context.
+
+The `docs/` folder contains a fictional developer documentation corpus. These files are plain text inputs for experimentation. Students do not need to run a backend server or a real database.
 
 ## Setup
 
-### 1. Install Python dependencies
+1. Install dependencies
 
-    pip install -r requirements.txt
+```bash
+pip install -r requirements.txt
+```
 
-### 2. Configure environment variables
+2. Create an environment file
 
-Copy the example file:
+```bash
+cp .env.example .env
+```
 
-    cp .env.example .env
+3. Add your Gemini key if you want LLM features
 
-Then edit `.env` to include your Gemini API key:
+```dotenv
+GEMINI_API_KEY=your_api_key_here
+```
 
-    GEMINI_API_KEY=your_api_key_here
-
-If you do not set a Gemini key, you can still run retrieval only mode.
-
----
+If `GEMINI_API_KEY` is missing, retrieval only mode still works.
 
 ## Running DocuBot
 
-Start the program:
+Start the CLI:
 
-    python main.py
+```bash
+python main.py
+```
 
-Choose a mode:
+Modes:
 
-- **1**: Naive LLM (Gemini reads the full docs)  
-- **2**: Retrieval only (no LLM)  
-- **3**: RAG (retrieval + Gemini)
+- `1`: Naive LLM over the full docs
+- `2`: Retrieval only
+- `3`: RAG
 
-You can use built in sample queries or type your own.
+You can either run the built-in sample queries from [dataset.py](/Users/vilma/Codepath/AI110Tinker3/ai110-module4tinker-docubot-starter/dataset.py) or type your own question.
 
----
+## Running Evaluation
 
-## Running Retrieval Evaluation (optional)
+Use the lightweight retrieval benchmark:
 
-    python evaluation.py
+```bash
+python evaluation.py
+```
 
-This prints simple retrieval hit rates for sample queries.
+This reports a simple hit rate based on whether the expected source file appeared in the retrieval results.
 
----
+## Files Students Usually Edit
 
-## Modifying the Project
+- [docubot.py](/Users/vilma/Codepath/AI110Tinker3/ai110-module4tinker-docubot-starter/docubot.py): document loading, indexing, scoring, retrieval, retrieval-only behavior
+- [llm_client.py](/Users/vilma/Codepath/AI110Tinker3/ai110-module4tinker-docubot-starter/llm_client.py): Gemini prompts for naive and RAG modes
+- [dataset.py](/Users/vilma/Codepath/AI110Tinker3/ai110-module4tinker-docubot-starter/dataset.py): sample questions and fallback corpus
+- [evaluation.py](/Users/vilma/Codepath/AI110Tinker3/ai110-module4tinker-docubot-starter/evaluation.py): simple retrieval evaluation harness
+- [model_card.md](/Users/vilma/Codepath/AI110Tinker3/ai110-module4tinker-docubot-starter/model_card.md): reflection template for system behavior, risks, and improvements
 
-You will primarily work in:
+## Learning Goals
 
-- `docubot.py`  
-  Implement or improve the retrieval index, scoring, and snippet selection.
-
-- `llm_client.py`  
-  Adjust the prompts and behavior of LLM responses.
-
-- `dataset.py`  
-  Add or change sample queries for testing.
-
----
+- Understand how simple retrieval can outperform unsupported generation
+- See why grounding improves reliability
+- Practice debugging a system by inspecting evidence, not just final answers
+- Notice when a safe refusal is the correct behavior
 
 ## Requirements
 
 - Python 3.9+
-- A Gemini API key for LLM features (only needed for modes 1 and 3)
-- No database, no server setup, no external services besides LLM calls
+- `google-generativeai` and `python-dotenv`
+- A Gemini API key only for modes `1` and `3`

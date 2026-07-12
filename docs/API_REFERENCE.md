@@ -1,58 +1,58 @@
 # API Reference
 
-This document lists the main API endpoints available in the sample application. It describes each route's purpose, required parameters, and expected responses. All protected endpoints require a valid access token.
+This document is part of the fictional developer corpus that DocuBot uses for retrieval experiments. It describes sample endpoints, request requirements, and response structures.
 
 ## Base URL
 
-    ```plaintext
-    /api
-    ````
+```plaintext
+/api
+```
 
 ## Authentication Endpoints
 
 ### POST /api/login
 
-Authenticates a user and returns a short lived access token.
+Authenticates a user and returns a short-lived access token.
 
-Request Body:
+Request body:
 
-    ```json
-    {
-    "username": "example",
-    "password": "secret"
-    }
-    ````
+```json
+{
+  "username": "example",
+  "password": "secret"
+}
+```
 
-Successful Response:
+Successful response:
 
-    ```json
-    {
-    "access_token": "<token>"
-    }
-    ```
+```json
+{
+  "access_token": "<token>"
+}
+```
 
 Notes:
 
-* Returns 401 if credentials are invalid.
-* The token must be included in the Authorization header for protected endpoints.
+- Returns `401` if credentials are invalid.
+- The token must be included in the `Authorization` header for protected endpoints.
 
 ### POST /api/refresh
 
-Exchanges an existing valid token for a new one with an updated expiration time.
+Exchanges an existing valid token for a new one with a refreshed expiration time.
 
 Headers:
 
-    ```plaintext
-    Authorization: Bearer <token>
-    ```
+```plaintext
+Authorization: Bearer <token>
+```
 
 Response:
 
-    ```json
-    {
-    "access_token": "<new_token>"
-    }
-    ```
+```json
+{
+  "access_token": "<new_token>"
+}
+```
 
 ## User Data Endpoints
 
@@ -62,25 +62,25 @@ Fetches profile data for a specific user.
 
 Headers:
 
-    ```plaintext
-    Authorization: Bearer <token>
-    ```
+```plaintext
+Authorization: Bearer <token>
+```
 
-Response Example:
+Response example:
 
-    ```json
-    {
-    "user_id": 42,
-    "email": "user@example.com",
-    "joined_at": "2024-01-15T10:22:00Z"
-    }
-    ```
+```json
+{
+  "user_id": 42,
+  "email": "user@example.com",
+  "joined_at": "2024-01-15T10:22:00Z"
+}
+```
 
-Failure Cases:
+Failure cases:
 
-* 401 if the token is missing or expired
-* 403 if the user lacks permission to view this profile
-* 404 if no user exists with the given ID
+- `401` if the token is missing or expired
+- `403` if the user lacks permission to view this profile
+- `404` if no user exists with the given ID
 
 ### GET /api/users
 
@@ -88,28 +88,28 @@ Returns a list of all users. Only accessible to admins.
 
 Headers:
 
-    ```plaintext
-    Authorization: Bearer <token>
-    ```
+```plaintext
+Authorization: Bearer <token>
+```
 
-Successful Response:
+Successful response:
 
-    ```json
-    [
-    {
-        "user_id": 1,
-        "email": "admin@example.com"
-    },
-    {
-        "user_id": 2,
-        "email": "guest@example.com"
-    }
-    ]
-    ```
+```json
+[
+  {
+    "user_id": 1,
+    "email": "admin@example.com"
+  },
+  {
+    "user_id": 2,
+    "email": "guest@example.com"
+  }
+]
+```
 
 Notes:
 
-* Returns 403 for non admin accounts.
+- Returns `403` for non-admin accounts.
 
 ## Project Data Endpoints
 
@@ -119,21 +119,21 @@ Returns all projects visible to the calling user.
 
 Headers:
 
-    ```plaintext
-    Authorization: Bearer <token>
-    ```
+```plaintext
+Authorization: Bearer <token>
+```
 
-Response Example:
+Response example:
 
-    ```json
-    [
-    {
-        "project_id": "alpha",
-        "name": "Alpha Project",
-        "status": "active"
-    }
-    ]
-    ```
+```json
+[
+  {
+    "project_id": "alpha",
+    "name": "Alpha Project",
+    "status": "active"
+  }
+]
+```
 
 ### GET /api/projects/<project_id>
 
@@ -141,41 +141,36 @@ Fetches detailed information for a single project.
 
 Headers:
 
-    ```plaintext
-    Authorization: Bearer <token>
-    ```
+```plaintext
+Authorization: Bearer <token>
+```
 
-Response Example:
+Response example:
 
-    ```json
-    {
-    "project_id": "alpha",
-    "name": "Alpha Project",
-    "description": "Internal research initiative.",
-    "status": "active",
-    "owner": 1
-    }
-    ```
+```json
+{
+  "project_id": "alpha",
+  "name": "Alpha Project",
+  "description": "Internal research initiative.",
+  "status": "active",
+  "owner": 1
+}
+```
 
-Failure Cases:
+Failure cases:
 
-* 401 for missing token
-* 403 if caller cannot access the project
-* 404 if the project does not exist
+- `401` for missing token
+- `403` if the caller cannot access the project
+- `404` if the project does not exist
 
-## Error Formats
+## Error Format
 
 All error responses follow this structure:
 
-    ```json
-    {
-    "error": "Description of the problem"
-    }
-    ```
+```json
+{
+  "error": "Description of the problem"
+}
+```
 
-Common error messages include:
-
-* "Unauthorized"
-* "Forbidden"
-* "Not Found"
-* "Invalid Request"
+Common messages include `Unauthorized`, `Forbidden`, `Not Found`, and `Invalid Request`.

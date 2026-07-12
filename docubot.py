@@ -7,8 +7,11 @@ Core DocuBot class responsible for:
 - Supporting RAG answers when paired with Gemini (Phase 2)
 """
 
-import os
 import glob
+import os
+import re
+
+from dataset import load_fallback_documents
 
 class DocuBot:
     def __init__(self, docs_folder="docs", llm_client=None):
@@ -36,13 +39,15 @@ class DocuBot:
         """
         docs = []
         pattern = os.path.join(self.docs_folder, "*.*")
-        for path in glob.glob(pattern):
+        for path in sorted(glob.glob(pattern)):
             if path.endswith(".md") or path.endswith(".txt"):
                 with open(path, "r", encoding="utf8") as f:
                     text = f.read()
                 filename = os.path.basename(path)
                 docs.append((filename, text))
-        return docs
+        if docs:
+            return docs
+        return load_fallback_documents()
 
     # -----------------------------------------------------------
     # Index Construction (Phase 1)
@@ -64,7 +69,9 @@ class DocuBot:
         ignore punctuation if needed.
         """
         index = {}
-        # TODO: implement simple indexing
+        for filename, text in documents:
+            for token in set(re.findall(r"\b\w+\b", text.lower())):
+                index.setdefault(token, []).append(filename)
         return index
 
     # -----------------------------------------------------------
@@ -81,8 +88,11 @@ class DocuBot:
         - Count how many appear in the text
         - Return the count as the score
         """
-        # TODO: implement scoring
-        return 0
+        query_tokens = set(re.findall(r"\b\w+\b", query.lower()))
+        if not query_tokens:
+            return 0
+        text_tokens = set(re.findall(r"\b\w+\b", text.lower()))
+        return sum(1 for token in query_tokens if token in text_tokens)
 
     def retrieve(self, query, top_k=3):
         """
@@ -91,8 +101,27 @@ class DocuBot:
 
         Return a list of (filename, text) sorted by score descending.
         """
-        results = []
-        # TODO: implement retrieval logic
+        query_tokens = set(re.findall(r"\b\w+\b", query.lower()))
+        if not query_tokens:
+            return []
+
+        candidate_filenames = set()
+        for token in query_tokens:
+            candidate_filenames.update(self.index.get(token, []))
+
+        if not candidate_filenames:
+            return []
+
+        filename_to_text = dict(self.documents)
+        scored_results = []
+        for filename in candidate_filenames:
+            text = filename_to_text[filename]
+            score = self.score_document(query, text)
+            if score > 0:
+                scored_results.append((score, filename, text))
+
+        scored_results.sort(key=lambda item: (-item[0], item[1]))
+        results = [(filename, text) for _, filename, text in scored_results]
         return results[:top_k]
 
     # -----------------------------------------------------------
@@ -111,7 +140,8 @@ class DocuBot:
 
         formatted = []
         for filename, text in snippets:
-            formatted.append(f"[{filename}]\n{text}\n")
+            preview = text.strip()
+            formatted.append(f"[{filename}]\n{preview}\n")
 
         return "\n---\n".join(formatted)
 

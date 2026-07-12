@@ -47,11 +47,23 @@ class GeminiClient:
     # -----------------------------------------------------------
 
     def naive_answer_over_full_docs(self, query, all_text):
-        # We ignore all_text and send a generic prompt instead
+        """
+        Answers a question using the full documentation corpus with no retrieval.
+        This baseline is intentionally simple, but it should still include the
+        docs so students can compare it against retrieval-backed approaches.
+        """
         prompt = f"""
-    You are a documentation assistant. 
-    Answer this developer question: {query}
-    """
+You are a documentation assistant.
+
+You will answer a developer question using the full documentation corpus below.
+If the docs do not clearly support an answer, say "I do not know based on the docs I have."
+
+Documentation corpus:
+{all_text}
+
+Developer question:
+{query}
+"""
         response = self.model.generate_content(prompt)
         return (response.text or "").strip()
 
